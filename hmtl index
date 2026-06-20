@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Morollune ✦ a dreamy archive</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <!-- KAWAII DECORATIONS (fixed corners, pointer-events none) -->
+  <div class="decorations" aria-hidden="true">
+    <div class="deco deco-moon">
+      <svg width="56" height="56" viewBox="0 0 56 56" fill="none"><path d="M38 8a22 22 0 1 0 10 18 17 17 0 0 1-10-18z" fill="#fff6e0" stroke="#fde4a6" stroke-width="2"/><circle cx="40" cy="18" r="2" fill="#f7ccd3"/><circle cx="34" cy="28" r="1.5" fill="#fde4a6"/></svg>
+    </div>
+    <div class="deco deco-cloud">
+      <svg width="64" height="40" viewBox="0 0 64 40" fill="none"><ellipse cx="20" cy="26" rx="14" ry="10" fill="#fffdf8"/><ellipse cx="36" cy="22" rx="18" ry="12" fill="#fffdf8"/><ellipse cx="50" cy="28" rx="10" ry="8" fill="#fffdf8"/><ellipse cx="20" cy="32" rx="14" ry="4" fill="#fff0d4" opacity="0.5"/></svg>
+    </div>
+    <div class="deco deco-mushroom">
+      <svg width="44" height="52" viewBox="0 0 44 52" fill="none"><rect x="16" y="28" width="12" height="20" rx="4" fill="#fff6e0"/><path d="M6 26a16 16 0 0 1 32 0H6z" fill="#ec8e9f" stroke="#e26780" stroke-width="1.5"/><circle cx="14" cy="18" r="2.5" fill="#fff6e0"/><circle cx="22" cy="12" r="2" fill="#fff6e0"/><circle cx="30" cy="20" r="2.5" fill="#fff6e0"/></svg>
+    </div>
+    <div class="deco deco-flower">
+      <svg width="40" height="40" viewBox="0 0 40 40" fill="none"><ellipse cx="20" cy="10" rx="5" ry="8" fill="#f3b0bc" transform="rotate(0 20 20)"/><ellipse cx="20" cy="10" rx="5" ry="8" fill="#f3b0bc" transform="rotate(72 20 20)"/><ellipse cx="20" cy="10" rx="5" ry="8" fill="#f3b0bc" transform="rotate(144 20 20)"/><ellipse cx="20" cy="10" rx="5" ry="8" fill="#f3b0bc" transform="rotate(216 20 20)"/><ellipse cx="20" cy="10" rx="5" ry="8" fill="#f3b0bc" transform="rotate(288 20 20)"/><circle cx="20" cy="20" r="4" fill="#ffe4b3"/></svg>
+    </div>
+    <div class="deco deco-heart">
+      <svg width="26" height="24" viewBox="0 0 26 24" fill="none"><path d="M13 22S2 15 2 7.5A5.5 5.5 0 0 1 13 5a5.5 5.5 0 0 1 11 2.5C24 15 13 22 13 22z" fill="#f3b0bc" stroke="#e26780" stroke-width="1.4"/></svg>
+    </div>
+    <div class="deco deco-star1">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M12 2l2.4 6.6L21 9.2l-5.2 4.4L17.4 21 12 16.9 6.6 21l1.6-7.4L3 9.2l6.6-.6L12 2z" fill="#ffe4b3" stroke="#fff0d4" stroke-width="1.2"/></svg>
+    </div>
+    <div class="deco deco-sparkle1">
+      <svg width="12" height="12" viewBox="0 0 16 16" fill="none"><path d="M8 0l1.6 5.4L15 8l-5.4 1.6L8 15l-1.6-5.4L1 8l5.4-1.6L8 0z" fill="#fff6e0"/></svg>
+    </div>
+    <div class="deco deco-sparkle2">
+      <svg width="10" height="10" viewBox="0 0 16 16" fill="none"><path d="M8 0l1.6 5.4L15 8l-5.4 1.6L8 15l-1.6-5.4L1 8l5.4-1.6L8 0z" fill="#fff6e0"/></svg>
+    </div>
+  </div>
+
+  <!-- GLOBAL LO-FI PLAYER (bottom-left) -->
+  <div id="global-player" class="global-player">
+    <div class="player-header">
+      <span class="player-label">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#7e9138" stroke-width="2.5" stroke-linecap="round"><circle cx="9" cy="18" r="3"/><circle cx="18" cy="15" r="3"/><path d="M12 18V5l9-3v10"/></svg>
+        <span id="player-label-text">lofi beats</span>
+      </span>
+      <div class="player-controls">
+        <button onclick="playerCycle(-1)" aria-label="previous">&#8249;</button>
+        <button onclick="playerCycle(1)" aria-label="next">&#8250;</button>
+        <button onclick="playerToggle()" id="player-toggle-btn" aria-label="collapse">&#10005;</button>
+      </div>
+    </div>
+    <iframe id="player-iframe" title="lo-fi player"
+      src="https://open.spotify.com/embed/playlist/37i9dQZF1DWWQRwui0ExPn"
+      width="100%" height="80" loading="lazy"
+      allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
+      style="border:0; border-radius:12px; display:block;">
+    </iframe>
+  </div>
+  <button id="player-pill" class="player-pill hidden" onclick="playerToggle()">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#62732a" stroke-width="2.5" stroke-linecap="round"><circle cx="9" cy="18" r="3"/><circle cx="18" cy="15" r="3"/><path d="M12 18V5l9-3v10"/></svg>
+    lo·fi
+  </button>
+
+  <!-- ADMIN LOCK BUTTON (bottom-right) -->
+  <div id="admin-area">
+    <div id="admin-authed-badge" class="hidden">
+      <span class="editor-badge">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#62732a" stroke-width="2.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        editor on
+      </span>
+      <button onclick="adminLogout()" class="btn-ghost-sm">lock again</button>
+    </div>
+    <button id="admin-lock-btn" onclick="openUnlock()" aria-label="unlock editor" class="lock-btn">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+    </button>
+  </div>
+
+  <!-- UNLOCK MODAL -->
+  <div id="unlock-modal" class="modal-overlay hidden" onclick="handleOverlayClick(event)">
+    <div class="modal-box" role="dialog" aria-modal="true">
+      <button class="modal-close" onclick="closeUnlock()">&#10005;</button>
+      <div class="modal-title">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#ec8e9f" stroke-width="2"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9z"/></svg>
+        moonlit editor
+      </div>
+      <p class="modal-hint">whisper the secret word to unlock the editor.</p>
+      <form onsubmit="submitUnlock(event)">
+        <input type="password" id="unlock-input" class="field-input" placeholder="password…" autocomplete="off" />
+        <p id="unlock-error" class="unlock-error hidden">that's not quite the right moon-word.</p>
+        <div class="modal-actions">
+          <button type="button" class="btn-ghost" onclick="closeUnlock()">cancel</button>
+          <button type="submit" class="btn-sage">unlock</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MAIN LAYOUT -->
+  <div class="site-wrapper">
+
+    <!-- HEADER -->
+    <header class="site-header">
+      <button onclick="navigate('home')" class="header-btn">
+        <span class="site-title">Morollune</span>
+        <span class="site-tagline">a moonlit archive</span>
+      </button>
+    </header>
+
+    <!-- NAV -->
+    <nav class="navbar" id="navbar">
+      <button class="nav-btn active" data-section="home" onclick="navigate('home')">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+        home
+      </button>
+      <button class="nav-btn" data-section="blog" onclick="navigate('blog')">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+        blog
+      </button>
+      <button class="nav-btn" data-section="music" onclick="navigate('music')">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="9" cy="18" r="3"/><circle cx="18" cy="15" r="3"/><path d="M12 18V5l9-3v10"/></svg>
+        music
+      </button>
+      <button class="nav-btn" data-section="readings" onclick="navigate('readings')">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+        readings
+      </button>
+      <button class="nav-btn" data-section="games" onclick="navigate('games')">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="2" y="6" width="20" height="12" rx="2"/><path d="M12 12h.01M7 12h.01M17 12h.01"/><path d="M7 9v6"/></svg>
+        games
+      </button>
+      <button class="nav-btn" data-section="gallery" onclick="navigate('gallery')">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+        gallery
+      </button>
+    </nav>
+
+    <!-- MAIN CONTENT -->
+    <main class="main-content" id="main-content">
+
+      <!-- HOME SECTION -->
+      <section id="section-home" class="section active">
+        <div class="panel home-panel">
+          <div class="home-image-wrap">
+            <img id="home-img" src="https://images.pexels.com/photos/6740218/pexels-photo-6740218.jpeg?auto=compress&cs=tinysrgb&w=900" alt="about image" />
+            <div class="home-img-overlay"></div>
+            <div class="home-sparkle">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fffdf8" stroke-width="1.5"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9z"/></svg>
+            </div>
+          </div>
+          <div class="home-text-wrap">
+            <button class="edit-btn admin-only hidden" onclick="openHomeEditor()">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+              edit
+            </button>
+            <p class="welcome-eyebrow">✦ welcome to ✦</p>
+            <h1 class="site-name" id="home-name">Morollune</h1>
+            <p class="site-subtitle" id="home-subtitle">a dreamy little archive of the everyday magic</p>
+            <p class="home-intro" id="home-intro">Welcome to my corner of the moonlit woods. I collect soft thoughts, song recommendations, and tiny glowing things I find while wandering. This little journal lives between the pages of a fantasy library — part blog, part music box, part pressed flowers. Stay a while and read gently.</p>
+          </div>
+        </div>
+
+        <!-- HOME EDITOR (hidden) -->
+        <div id="home-editor" class="panel editor-panel hidden">
+          <div class="editor-title">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#7e9138" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+            editing home
+          </div>
+          <label class="field-label">name</label>
+          <input type="text" id="edit-home-name" class="field-input" />
+          <label class="field-label">subtitle</label>
+          <input type="text" id="edit-home-subtitle" class="field-input" />
+          <label class="field-label">image url</label>
+          <input type="text" id="edit-home-image" class="field-input" placeholder="https://…" />
+          <label class="field-label">intro</label>
+          <textarea id="edit-home-intro" class="field-textarea"></textarea>
+          <div class="editor-actions">
+            <button class="btn-ghost" onclick="closeHomeEditor()">cancel</button>
+            <button class="btn-sage" onclick="saveHome()">save</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- BLOG SECTION -->
+      <section id="section-blog" class="section hidden">
+        <div class="section-title-row">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#62732a" stroke-width="2" stroke-linecap="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+          <h2 class="section-title">the blog</h2>
+        </div>
+        <div class="admin-only hidden" id="blog-new-btn-wrap">
+          <button class="btn-sage" onclick="openNewBlog()">+ new entry</button>
+        </div>
+        <div id="blog-editor-wrap" class="hidden"></div>
+        <div id="blog-list"></div>
+      </section>
+
+      <!-- MUSIC SECTION -->
+      <section id="section-music" class="section hidden">
+        <div class="section-title-row">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#62732a" stroke-width="2" stroke-linecap="round"><circle cx="9" cy="18" r="3"/><circle cx="18" cy="15" r="3"/><path d="M12 18V5l9-3v10"/></svg>
+          <h2 class="section-title">music of the day</h2>
+        </div>
+        <div id="music-thumbs" class="music-thumbs"></div>
+        <div id="music-editor-wrap" class="hidden"></div>
+        <div id="music-active-panel"></div>
+        <div class="admin-only hidden" id="music-add-btn-wrap" style="margin-top:1rem">
+          <button class="btn-sage" onclick="openNewAlbum()">+ add album</button>
+        </div>
+      </section>
+
+      <!-- READINGS SECTION -->
+      <section id="section-readings" class="section hidden">
+        <div class="section-title-row">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#62732a" stroke-width="2" stroke-linecap="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+          <h2 class="section-title">readings</h2>
+        </div>
+        <div class="panel" id="readings-view">
+          <div class="text-section-inner">
+            <button class="edit-btn admin-only hidden" onclick="openTextEditor('readings')">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+              edit
+            </button>
+            <p id="readings-text" class="body-text"></p>
+          </div>
+        </div>
+        <div id="readings-editor" class="panel editor-panel hidden">
+          <label class="field-label">readings content</label>
+          <textarea id="edit-readings-text" class="field-textarea" style="min-height:220px"></textarea>
+          <div class="editor-actions">
+            <button class="btn-ghost" onclick="closeTextEditor('readings')">cancel</button>
+            <button class="btn-sage" onclick="saveText('readings')">save</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- GAMES SECTION -->
+      <section id="section-games" class="section hidden">
+        <div class="section-title-row">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#62732a" stroke-width="2" stroke-linecap="round"><rect x="2" y="6" width="20" height="12" rx="2"/><path d="M12 12h.01M7 12h.01M17 12h.01"/><path d="M7 9v6"/></svg>
+          <h2 class="section-title">games</h2>
+        </div>
+        <div class="panel" id="games-view">
+          <div class="text-section-inner">
+            <button class="edit-btn admin-only hidden" onclick="openTextEditor('games')">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+              edit
+            </button>
+            <p id="games-text" class="body-text"></p>
+          </div>
+        </div>
+        <div id="games-editor" class="panel editor-panel hidden">
+          <label class="field-label">games content</label>
+          <textarea id="edit-games-text" class="field-textarea" style="min-height:220px"></textarea>
+          <div class="editor-actions">
+            <button class="btn-ghost" onclick="closeTextEditor('games')">cancel</button>
+            <button class="btn-sage" onclick="saveText('games')">save</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- GALLERY SECTION -->
+      <section id="section-gallery" class="section hidden">
+        <div class="section-title-row">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#62732a" stroke-width="2" stroke-linecap="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+          <h2 class="section-title">the gallery</h2>
+        </div>
+        <div id="gallery-add-form" class="panel editor-panel admin-only hidden">
+          <label class="field-label">add an image by url</label>
+          <div class="gallery-form-row">
+            <input type="text" id="gallery-url-input" class="field-input" placeholder="https://image…/photo.jpg" />
+            <input type="text" id="gallery-caption-input" class="field-input" placeholder="caption (optional)" />
+            <button class="btn-sage" onclick="addGalleryImage()">+ add</button>
+          </div>
+          <p style="font-size:11px;color:#ec8e9f;margin-top:6px">paste direct image links. gallery images stay separate from the site's kawaii decorations.</p>
+        </div>
+        <div id="gallery-grid" class="gallery-grid"></div>
+      </section>
+
+    </main>
+
+    <footer class="site-footer">
+      <p>made with <svg style="display:inline;vertical-align:middle" width="12" height="12" viewBox="0 0 26 24" fill="#f3b0bc"><path d="M13 22S2 15 2 7.5A5.5 5.5 0 0 1 13 5a5.5 5.5 0 0 1 11 2.5C24 15 13 22 13 22z"/></svg> under a quiet moon</p>
+      <p style="font-size:11px;color:#ec8e9f;margin-top:4px">✦ Morollune — a dreamy personal archive ✦</p>
+    </footer>
+
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
