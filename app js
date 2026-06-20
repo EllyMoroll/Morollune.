@@ -1,0 +1,587 @@
+/* =============================================
+   MOROLLUNE — app.js
+   ============================================= */
+
+   'use strict';
+
+   // ── CONSTANTS ────────────────────────────────
+   const STORAGE_KEY = 'morollune:site-data:v1';
+   const AUTH_KEY    = 'morollune:authed:v1';
+   const PASSWORD    = 'moon123';
+   
+   const LOFI_PLAYLISTS = [
+     { label: 'lofi beats',    url: 'https://open.spotify.com/embed/playlist/37i9dQZF1DWWQRwui0ExPn' },
+     { label: 'sleepy piano',  url: 'https://open.spotify.com/embed/playlist/37i9dQZF1DX4sWSpwq3LiO' },
+     { label: 'ambient fairy', url: 'https://open.spotify.com/embed/playlist/37i9dQZF1DX3Ogo9pFvBkY' },
+   ];
+   
+   // ── DEFAULT DATA ──────────────────────────────
+   const DEFAULT_DATA = {
+     about: {
+       name: 'Morollune',
+       subtitle: 'a dreamy little archive of the everyday magic',
+       intro: 'Welcome to my corner of the moonlit woods. I collect soft thoughts, song recommendations, and tiny glowing things I find while wandering. This little journal lives between the pages of a fantasy library — part blog, part music box, part pressed flowers. Stay a while and read gently.',
+       image: 'https://images.pexels.com/photos/6740218/pexels-photo-6740218.jpeg?auto=compress&cs=tinysrgb&w=900',
+     },
+     blog: [
+       { id: 'b1', title: 'on finding mushrooms after rain', body: "The path behind the house turned silver today. Tiny mushrooms wearing damp bonnets pushed through the moss like sleepy neighbours. I crouched beside them for so long my knees went purple. I think that's the whole secret of a good life — noticing the small soft things before they vanish.", date: '2026-06-02', mood: 'misty' },
+       { id: 'b2', title: 'a letter to the moon', body: 'Dear moon, thank you for being the same shape in every window I have ever lived in. I wrote you a playlist tonight, all harp and static. I taped it to the window. If it reaches you, leave a sign in the frost.', date: '2026-05-21', mood: 'tender' },
+     ],
+     music: {
+       albums: [
+         { id: 'a1', title: 'Bubbles', artist: 'Ricky Eat Acid', note: 'today the ceiling sounds like this. soft, reverent, full of tiny bell-bursts.', albumCover: 'https://images.pexels.com/photos/3784221/pexels-photo-3784221.jpeg?auto=compress&cs=tinysrgb&w=700', spotifyUrl: 'https://open.spotify.com/track/1S79P0LjMwfa0jrNQqjxU5' },
+         { id: 'a2', title: 'Reverie', artist: 'Hiroshi Yoshimura', note: 'ambient like walking through fog that smells like pine.', albumCover: 'https://images.pexels.com/photos/3617500/pexels-photo-3617500.jpeg?auto=compress&cs=tinysrgb&w=700', spotifyUrl: 'https://open.spotify.com/track/1S79P0LjMwfa0jrNQqjxU5' },
+       ],
+     },
+     readings: "Currently lost inside *The Starless Sea* by Erin Morgenstern. It tastes like cardamom and candle-smoke — a library built beneath the world, full of doors that don't quite lock. I read a chapter every night before bed so the dream will keep going.\n\nNext on the shelf: *The Ocean at the End of the Lane*.",
+     games: "this week's cosy rotation:\n• *Cosy Grove* — bear ghosts and foraging, very gentle\n• *Stardew Valley* — year 4, farm named 'tiny moon'\n• *Alba: a wildlife adventure* — photographing birds on a tiny island\n\nmostly I want games that feel like sitting in a warm kitchen.",
+     gallery: [
+       { id: 'g1', url: 'https://images.pexels.com/photos/3784221/pexels-photo-3784221.jpeg?auto=compress&cs=tinysrgb&w=700', caption: 'tiny flowers in glass jars' },
+       { id: 'g2', url: 'https://images.pexels.com/photos/6740218/pexels-photo-6740218.jpeg?auto=compress&cs=tinysrgb&w=700', caption: 'soft pink things' },
+       { id: 'g3', url: 'https://images.pexels.com/photos/3617500/pexels-photo-3617500.jpeg?auto=compress&cs=tinysrgb&w=700', caption: 'a tea party for one' },
+     ],
+   };
+   
+   // ── STATE ─────────────────────────────────────
+   let state = loadData();
+   let authed = sessionStorage.getItem(AUTH_KEY) === '1';
+   let currentSection = 'home';
+   let musicActiveIdx = 0;
+   let playerIdx = 0;
+   let blogDraft = null;   // { id, title, body, date, mood } | null
+   let albumDraft = null;  // AlbumEntry | null
+   
+   // ── STORAGE ───────────────────────────────────
+   function loadData() {
+     try {
+       const raw = localStorage.getItem(STORAGE_KEY);
+       if (!raw) return JSON.parse(JSON.stringify(DEFAULT_DATA));
+       const p = JSON.parse(raw);
+       return {
+         about:    { ...DEFAULT_DATA.about,   ...(p.about   || {}) },
+         blog:     p.blog     || DEFAULT_DATA.blog,
+         music:    { albums:  p.music?.albums  || (p.music?.title ? [{ id: 'a0', title: p.music.title, artist: p.music.artist||'', albumCover: p.music.albumCover||'', spotifyUrl: p.music.spotifyUrl||'', note: p.music.note||'' }] : DEFAULT_DATA.music.albums) },
+         readings: p.readings != null ? p.readings : DEFAULT_DATA.readings,
+         games:    p.games    != null ? p.games    : DEFAULT_DATA.games,
+         gallery:  p.gallery  || DEFAULT_DATA.gallery,
+       };
+     } catch { return JSON.parse(JSON.stringify(DEFAULT_DATA)); }
+   }
+   
+   function saveData() {
+     try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch {}
+   }
+   
+   // ── HELPERS ───────────────────────────────────
+   function uid() { return Math.random().toString(36).slice(2, 10); }
+   
+   function toEmbedUrl(input) {
+     if (!input) return '';
+     let url = input.trim();
+     if (!url.includes('/embed/')) url = url.replace('open.spotify.com/', 'open.spotify.com/embed/');
+     // strip query strings after the ID for cleaner embed
+     return url;
+   }
+   
+   function formatDate(iso) {
+     const d = new Date(iso);
+     if (isNaN(d.getTime())) return iso;
+     return d.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+   }
+   
+   function todayISO() { return new Date().toISOString().slice(0, 10); }
+   
+   function esc(str) {
+     return String(str)
+       .replace(/&/g, '&amp;')
+       .replace(/</g, '&lt;')
+       .replace(/>/g, '&gt;')
+       .replace(/"/g, '&quot;');
+   }
+   
+   // ── AUTH ──────────────────────────────────────
+   function openUnlock()  { document.getElementById('unlock-modal').classList.remove('hidden'); document.getElementById('unlock-input').value = ''; document.getElementById('unlock-error').classList.add('hidden'); setTimeout(() => document.getElementById('unlock-input').focus(), 50); }
+   function closeUnlock() { document.getElementById('unlock-modal').classList.add('hidden'); }
+   
+   function handleOverlayClick(e) {
+     if (e.target === document.getElementById('unlock-modal')) closeUnlock();
+   }
+   
+   function submitUnlock(e) {
+     e.preventDefault();
+     const pw = document.getElementById('unlock-input').value;
+     if (pw === PASSWORD) {
+       authed = true;
+       sessionStorage.setItem(AUTH_KEY, '1');
+       closeUnlock();
+       applyAuthUI();
+       renderCurrentSection();
+     } else {
+       document.getElementById('unlock-error').classList.remove('hidden');
+       document.getElementById('unlock-input').value = '';
+       document.getElementById('unlock-input').focus();
+     }
+   }
+   
+   function adminLogout() {
+     authed = false;
+     sessionStorage.removeItem(AUTH_KEY);
+     applyAuthUI();
+     renderCurrentSection();
+   }
+   
+   function applyAuthUI() {
+     const lockBtn   = document.getElementById('admin-lock-btn');
+     const badge     = document.getElementById('admin-authed-badge');
+     if (authed) {
+       lockBtn.classList.add('hidden');
+       badge.classList.remove('hidden');
+     } else {
+       lockBtn.classList.remove('hidden');
+       badge.classList.add('hidden');
+     }
+     // show/hide all admin-only elements
+     document.querySelectorAll('.admin-only').forEach(el => {
+       authed ? el.classList.remove('hidden') : el.classList.add('hidden');
+     });
+   }
+   
+   // ── NAVIGATION ────────────────────────────────
+   function navigate(id) {
+     // hide all sections
+     document.querySelectorAll('.section').forEach(s => s.classList.add('hidden'));
+     // show target
+     const target = document.getElementById('section-' + id);
+     if (target) {
+       target.classList.remove('hidden');
+       // re-trigger animation by toggling class
+       target.classList.remove('fade-up-active');
+       void target.offsetWidth;
+       target.style.animation = 'none';
+       void target.offsetWidth;
+       target.style.animation = '';
+     }
+     // nav active state
+     document.querySelectorAll('.nav-btn').forEach(b => {
+       b.classList.toggle('active', b.dataset.section === id);
+     });
+     currentSection = id;
+     window.scrollTo({ top: 0, behavior: 'smooth' });
+     renderCurrentSection();
+   }
+   
+   function renderCurrentSection() {
+     switch (currentSection) {
+       case 'home':     renderHome();     break;
+       case 'blog':     renderBlog();     break;
+       case 'music':    renderMusic();    break;
+       case 'readings': renderText('readings'); break;
+       case 'games':    renderText('games');    break;
+       case 'gallery':  renderGallery();  break;
+     }
+   }
+   
+   // ── HOME ──────────────────────────────────────
+   function renderHome() {
+     const a = state.about;
+     document.getElementById('home-img').src         = a.image;
+     document.getElementById('home-name').textContent     = a.name;
+     document.getElementById('home-subtitle').textContent = a.subtitle;
+     document.getElementById('home-intro').textContent    = a.intro;
+     applyAuthUI();
+   }
+   
+   function openHomeEditor() {
+     const a = state.about;
+     document.getElementById('edit-home-name').value     = a.name;
+     document.getElementById('edit-home-subtitle').value = a.subtitle;
+     document.getElementById('edit-home-image').value    = a.image;
+     document.getElementById('edit-home-intro').value    = a.intro;
+     document.getElementById('home-editor').classList.remove('hidden');
+     document.getElementById('home-editor').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+   }
+   
+   function closeHomeEditor() { document.getElementById('home-editor').classList.add('hidden'); }
+   
+   function saveHome() {
+     state.about = {
+       name:     document.getElementById('edit-home-name').value,
+       subtitle: document.getElementById('edit-home-subtitle').value,
+       image:    document.getElementById('edit-home-image').value,
+       intro:    document.getElementById('edit-home-intro').value,
+     };
+     saveData();
+     closeHomeEditor();
+     renderHome();
+   }
+   
+   // ── BLOG ──────────────────────────────────────
+   function renderBlog() {
+     applyAuthUI();
+     const wrap  = document.getElementById('blog-editor-wrap');
+     const list  = document.getElementById('blog-list');
+   
+     // editor
+     if (blogDraft) {
+       wrap.classList.remove('hidden');
+       wrap.innerHTML = blogEditorHTML(blogDraft);
+     } else {
+       wrap.classList.add('hidden');
+       wrap.innerHTML = '';
+     }
+   
+     // list
+     if (state.blog.length === 0 && !blogDraft) {
+       list.innerHTML = '<div class="panel empty-state">the journal is blank for now…</div>';
+       return;
+     }
+     list.innerHTML = state.blog.map(p => `
+       <div class="panel blog-card" id="blog-card-${esc(p.id)}">
+         <div class="blog-card-header">
+           <span class="blog-card-title">${esc(p.title || 'untitled')}</span>
+           <span class="blog-card-date">
+             <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+             ${esc(formatDate(p.date))}
+           </span>
+           ${p.mood ? `<span class="blog-card-mood">✦ ${esc(p.mood)}</span>` : ''}
+         </div>
+         <p class="blog-card-body">${esc(p.body)}</p>
+         ${authed ? `
+           <div class="blog-card-actions admin-only">
+             <button class="btn-ghost" onclick="openEditBlog('${esc(p.id)}')">✎ edit</button>
+             <button class="btn-danger" onclick="deleteBlog('${esc(p.id)}')">✕ delete</button>
+           </div>` : ''}
+       </div>
+     `).join('');
+   }
+   
+   function blogEditorHTML(d) {
+     return `
+       <div class="panel editor-panel">
+         <div class="editor-title">✎ ${d._isNew ? 'writing entry…' : 'editing "' + esc(d.title) + '"'}</div>
+         <label class="field-label">title</label>
+         <input type="text" id="blog-draft-title" class="field-input" value="${esc(d.title)}" placeholder="a dreamy title…" />
+         <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:4px">
+           <div>
+             <label class="field-label">date</label>
+             <input type="date" id="blog-draft-date" class="field-input" value="${esc(d.date)}" />
+           </div>
+           <div>
+             <label class="field-label">mood</label>
+             <input type="text" id="blog-draft-mood" class="field-input" value="${esc(d.mood || '')}" placeholder="soft / misty / tender" />
+           </div>
+         </div>
+         <label class="field-label">entry</label>
+         <textarea id="blog-draft-body" class="field-textarea" style="min-height:180px" placeholder="write something soft…">${esc(d.body)}</textarea>
+         <div class="editor-actions">
+           <button class="btn-ghost" onclick="cancelBlog()">✕ cancel</button>
+           <button class="btn-sage" onclick="saveBlog()">✓ save entry</button>
+         </div>
+       </div>`;
+   }
+   
+   function openNewBlog() {
+     blogDraft = { id: uid(), title: '', body: '', date: todayISO(), mood: '', _isNew: true };
+     renderBlog();
+     document.getElementById('blog-editor-wrap').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+   }
+   
+   function openEditBlog(id) {
+     const p = state.blog.find(b => b.id === id);
+     if (!p) return;
+     blogDraft = { ...p, _isNew: false };
+     renderBlog();
+     document.getElementById('blog-editor-wrap').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+   }
+   
+   function cancelBlog() { blogDraft = null; renderBlog(); }
+   
+   function saveBlog() {
+     if (!blogDraft) return;
+     blogDraft.title = document.getElementById('blog-draft-title').value;
+     blogDraft.body  = document.getElementById('blog-draft-body').value;
+     blogDraft.date  = document.getElementById('blog-draft-date').value;
+     blogDraft.mood  = document.getElementById('blog-draft-mood').value;
+     const exists = state.blog.some(p => p.id === blogDraft.id);
+     const clean = { id: blogDraft.id, title: blogDraft.title, body: blogDraft.body, date: blogDraft.date, mood: blogDraft.mood };
+     if (exists) {
+       state.blog = state.blog.map(p => p.id === clean.id ? clean : p);
+     } else {
+       state.blog = [clean, ...state.blog];
+     }
+     saveData();
+     blogDraft = null;
+     renderBlog();
+   }
+   
+   function deleteBlog(id) {
+     state.blog = state.blog.filter(p => p.id !== id);
+     if (blogDraft && blogDraft.id === id) blogDraft = null;
+     saveData();
+     renderBlog();
+   }
+   
+   // ── MUSIC ─────────────────────────────────────
+   function renderMusic() {
+     applyAuthUI();
+     const albums = state.music.albums || [];
+   
+     // clamp activeIdx
+     if (musicActiveIdx >= albums.length && albums.length > 0) musicActiveIdx = albums.length - 1;
+   
+     // thumbs
+     const thumbsEl = document.getElementById('music-thumbs');
+     if (albums.length === 0) {
+       thumbsEl.innerHTML = '';
+     } else {
+       thumbsEl.innerHTML = albums.map((a, i) => `
+         <button class="music-thumb ${i === musicActiveIdx ? 'active' : ''}"
+                 onclick="selectAlbum(${i})"
+                 title="${esc(a.title || 'album')}">
+           ${a.albumCover
+             ? `<img src="${esc(a.albumCover)}" alt="${esc(a.title)}" onerror="this.style.display='none'" />`
+             : `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ec8e9f" stroke-width="2"><circle cx="9" cy="18" r="3"/><circle cx="18" cy="15" r="3"/><path d="M12 18V5l9-3v10"/></svg>`
+           }
+         </button>
+       `).join('');
+     }
+   
+     // editor
+     const edWrap = document.getElementById('music-editor-wrap');
+     if (albumDraft) {
+       edWrap.classList.remove('hidden');
+       edWrap.innerHTML = albumEditorHTML(albumDraft);
+       // live cover preview
+       const coverInput = document.getElementById('album-draft-cover');
+       if (coverInput) coverInput.addEventListener('input', updateCoverPreview);
+     } else {
+       edWrap.classList.add('hidden');
+       edWrap.innerHTML = '';
+     }
+   
+     // active album panel
+     const panel = document.getElementById('music-active-panel');
+     if (albumDraft) { panel.innerHTML = ''; return; }
+   
+     if (albums.length === 0) {
+       panel.innerHTML = '<div class="panel empty-state">no albums yet — add one below.</div>';
+       return;
+     }
+   
+     const a = albums[musicActiveIdx];
+     const embedSrc = toEmbedUrl(a.spotifyUrl);
+   
+     panel.innerHTML = `
+       <div class="panel music-panel">
+         ${albums.length > 1 ? `
+           <button class="music-nav-btn left"  onclick="cycleMusicAlbum(-1)">&#8249;</button>
+           <button class="music-nav-btn right" onclick="cycleMusicAlbum(1)">&#8250;</button>
+         ` : ''}
+         <div class="music-inner">
+           <div class="album-cover-wrap">
+             ${a.albumCover
+               ? `<img src="${esc(a.albumCover)}" alt="album cover for ${esc(a.title)}" onerror="this.style.opacity='0'" />`
+               : `<div class="album-cover-placeholder"><svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#ec8e9f" stroke-width="1.5"><circle cx="9" cy="18" r="3"/><circle cx="18" cy="15" r="3"/><path d="M12 18V5l9-3v10"/></svg></div>`
+             }
+           </div>
+           <div>
+             <h3 class="album-title">${esc(a.title || 'untitled')}</h3>
+             <p class="album-artist">${esc(a.artist)}</p>
+             ${a.note ? `<p class="album-note">${esc(a.note)}</p>` : ''}
+             ${embedSrc
+               ? `<iframe class="spotify-embed" src="${esc(embedSrc)}" width="100%" height="152" loading="lazy" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"></iframe>`
+               : '<p style="font-size:13px;color:#ec8e9f;font-style:italic">no spotify link yet</p>'
+             }
+             ${authed ? `
+               <div class="music-actions admin-only">
+                 <button class="btn-ghost" onclick="openEditAlbum('${esc(a.id)}')">✎ edit</button>
+                 <button class="btn-danger" onclick="deleteAlbum('${esc(a.id)}')">✕ remove</button>
+               </div>` : ''}
+           </div>
+         </div>
+       </div>`;
+   }
+   
+   function albumEditorHTML(d) {
+     return `
+       <div class="panel editor-panel">
+         <div class="editor-title">✎ ${d._isNew ? 'new album entry' : 'editing "' + esc(d.title) + '"'}</div>
+         ${d.albumCover ? `<div class="cover-preview-wrap"><img id="album-cover-preview" src="${esc(d.albumCover)}" alt="cover preview" onerror="this.style.display='none'" /></div>` : `<div class="cover-preview-wrap" id="album-cover-preview-wrap"></div>`}
+         <label class="field-label">album cover image url</label>
+         <input type="text" id="album-draft-cover" class="field-input" value="${esc(d.albumCover)}" placeholder="https://…" />
+         <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:4px">
+           <div>
+             <label class="field-label">title</label>
+             <input type="text" id="album-draft-title" class="field-input" value="${esc(d.title)}" />
+           </div>
+           <div>
+             <label class="field-label">artist</label>
+             <input type="text" id="album-draft-artist" class="field-input" value="${esc(d.artist)}" />
+           </div>
+         </div>
+         <label class="field-label">spotify link</label>
+         <input type="text" id="album-draft-spotify" class="field-input" value="${esc(d.spotifyUrl)}" placeholder="https://open.spotify.com/track/…" />
+         <p style="font-size:11px;color:#ec8e9f;margin-top:4px">cole qualquer link do open.spotify.com.</p>
+         <label class="field-label">note</label>
+         <textarea id="album-draft-note" class="field-textarea" placeholder="what does this sound like…">${esc(d.note)}</textarea>
+         <div class="editor-actions">
+           <button class="btn-ghost" onclick="cancelAlbum()">✕ cancel</button>
+           <button class="btn-sage" onclick="saveAlbum()">✓ save</button>
+         </div>
+       </div>`;
+   }
+   
+   function updateCoverPreview() {
+     const val = document.getElementById('album-draft-cover').value;
+     let img = document.getElementById('album-cover-preview');
+     const wrap = document.getElementById('album-cover-preview-wrap');
+     if (!img && wrap) {
+       img = document.createElement('img');
+       img.id = 'album-cover-preview';
+       img.style.cssText = 'width:96px;height:96px;border-radius:12px;object-fit:cover;border:2px solid rgba(255,255,255,0.7)';
+       img.onerror = () => { img.style.display = 'none'; };
+       wrap.appendChild(img);
+     }
+     if (img) { img.src = val; img.style.display = val ? 'block' : 'none'; }
+   }
+   
+   function selectAlbum(i) { musicActiveIdx = i; albumDraft = null; renderMusic(); }
+   function cycleMusicAlbum(dir) {
+     const len = state.music.albums.length;
+     musicActiveIdx = (musicActiveIdx + dir + len) % len;
+     renderMusic();
+   }
+   
+   function openNewAlbum() {
+     albumDraft = { id: uid(), title: '', artist: '', albumCover: '', spotifyUrl: '', note: '', _isNew: true };
+     renderMusic();
+     document.getElementById('music-editor-wrap').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+   }
+   
+   function openEditAlbum(id) {
+     const a = state.music.albums.find(x => x.id === id);
+     if (!a) return;
+     albumDraft = { ...a, _isNew: false };
+     renderMusic();
+     document.getElementById('music-editor-wrap').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+   }
+   
+   function cancelAlbum() { albumDraft = null; renderMusic(); }
+   
+   function saveAlbum() {
+     if (!albumDraft) return;
+     albumDraft.albumCover = document.getElementById('album-draft-cover').value;
+     albumDraft.title      = document.getElementById('album-draft-title').value;
+     albumDraft.artist     = document.getElementById('album-draft-artist').value;
+     albumDraft.spotifyUrl = document.getElementById('album-draft-spotify').value;
+     albumDraft.note       = document.getElementById('album-draft-note').value;
+     const clean = { id: albumDraft.id, title: albumDraft.title, artist: albumDraft.artist, albumCover: albumDraft.albumCover, spotifyUrl: albumDraft.spotifyUrl, note: albumDraft.note };
+     const exists = state.music.albums.some(a => a.id === clean.id);
+     if (exists) {
+       state.music.albums = state.music.albums.map(a => a.id === clean.id ? clean : a);
+     } else {
+       state.music.albums = [...state.music.albums, clean];
+       musicActiveIdx = state.music.albums.length - 1;
+     }
+     saveData();
+     albumDraft = null;
+     renderMusic();
+   }
+   
+   function deleteAlbum(id) {
+     state.music.albums = state.music.albums.filter(a => a.id !== id);
+     if (musicActiveIdx >= state.music.albums.length && state.music.albums.length > 0) musicActiveIdx = state.music.albums.length - 1;
+     saveData();
+     albumDraft = null;
+     renderMusic();
+   }
+   
+   // ── TEXT SECTIONS (readings / games) ─────────
+   function renderText(key) {
+     applyAuthUI();
+     document.getElementById(key + '-text').textContent = state[key];
+   }
+   
+   function openTextEditor(key) {
+     document.getElementById('edit-' + key + '-text').value = state[key];
+     document.getElementById(key + '-view').classList.add('hidden');
+     document.getElementById(key + '-editor').classList.remove('hidden');
+   }
+   
+   function closeTextEditor(key) {
+     document.getElementById(key + '-view').classList.remove('hidden');
+     document.getElementById(key + '-editor').classList.add('hidden');
+   }
+   
+   function saveText(key) {
+     state[key] = document.getElementById('edit-' + key + '-text').value;
+     saveData();
+     closeTextEditor(key);
+     renderText(key);
+   }
+   
+   // ── GALLERY ───────────────────────────────────
+   function renderGallery() {
+     applyAuthUI();
+     const grid = document.getElementById('gallery-grid');
+     if (state.gallery.length === 0) {
+       grid.innerHTML = '<div class="panel empty-state" style="grid-column:1/-1">the gallery awaits its first picture…</div>';
+       return;
+     }
+     grid.innerHTML = state.gallery.map(img => `
+       <figure class="gallery-item">
+         <div class="gallery-item-inner">
+           <img src="${esc(img.url)}" alt="${esc(img.caption || 'gallery image')}" loading="lazy"
+             onerror="this.src='https://images.pexels.com/photos/3617500/pexels-photo-3617500.jpeg?auto=compress&cs=tinysrgb&w=500'" />
+           ${img.caption ? `<figcaption>${esc(img.caption)}</figcaption>` : ''}
+           ${authed ? `<button class="gallery-delete-btn admin-only" onclick="deleteGalleryImage('${esc(img.id)}')" aria-label="remove">✕</button>` : ''}
+         </div>
+       </figure>
+     `).join('');
+   }
+   
+   function addGalleryImage() {
+     const urlEl = document.getElementById('gallery-url-input');
+     const capEl = document.getElementById('gallery-caption-input');
+     const url = urlEl.value.trim();
+     if (!url) return;
+     state.gallery = [{ id: uid(), url, caption: capEl.value.trim() }, ...state.gallery];
+     saveData();
+     urlEl.value = '';
+     capEl.value = '';
+     renderGallery();
+   }
+   
+   function deleteGalleryImage(id) {
+     state.gallery = state.gallery.filter(g => g.id !== id);
+     saveData();
+     renderGallery();
+   }
+   
+   // ── LO-FI PLAYER ─────────────────────────────
+   function playerToggle() {
+     const player = document.getElementById('global-player');
+     const pill   = document.getElementById('player-pill');
+     if (player.classList.contains('hidden')) {
+       player.classList.remove('hidden');
+       pill.classList.add('hidden');
+     } else {
+       player.classList.add('hidden');
+       pill.classList.remove('hidden');
+     }
+   }
+   
+   function playerCycle(dir) {
+     playerIdx = (playerIdx + dir + LOFI_PLAYLISTS.length) % LOFI_PLAYLISTS.length;
+     const cur = LOFI_PLAYLISTS[playerIdx];
+     document.getElementById('player-label-text').textContent = cur.label;
+     document.getElementById('player-iframe').src = cur.url;
+   }
+   
+   // ── INIT ──────────────────────────────────────
+   function init() {
+     applyAuthUI();
+     navigate('home');
+   }
+   
+   document.addEventListener('DOMContentLoaded', init);
